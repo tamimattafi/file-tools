@@ -29,8 +29,8 @@ function splitData(data) {
     const outputContent = new StringBuilder()
     const lines = data.trim().split(lineSeparator)
 
-    const header = appendHeader ? lines[0] : ""
-    const footer = appendFooter ? lines[lines.length - 1] : ""
+    const header = appendHeader ? lines[0].trim() : ""
+    const footer = appendFooter ? lines[lines.length - 1].trim() : ""
     const addsOnSize = header.length + footer.length
     if (addsOnSize > outputMaxSize) {
         throw new Error(`Header and footer combination is larger than outputMaxSize ${outputMaxSize}`)
@@ -38,6 +38,34 @@ function splitData(data) {
 
     const startIndex = appendHeader ? 1 : 0
     const endIndex = appendFooter ? lines.length - 1 : lines.length
+
+    const tryAppendHeader = () => {
+        const currentLength = outputContent.length()
+        if (appendHeader && currentLength <= 0) {
+            outputContent.appendLine(header)
+        }
+    }
+
+    const appendData = (data) => {
+        tryAppendHeader()
+        outputContent.appendLine(data)
+    }
+
+    const tryAppendFooter = () => {
+        const currentLength = outputContent.length()
+        if (appendFooter && currentLength > 0) {
+            outputContent.appendLine(footer)
+        }
+    }
+
+    const addCurrentPart = () => {
+        const currentLength = outputContent.length()
+        if (currentLength > 0) {
+            tryAppendFooter()
+            convertedParts.push(outputContent.toString().trim())
+            outputContent.clear()
+        }
+    }
 
     for (let index = startIndex; index < endIndex; index++) {
         const line = lines[index]
@@ -48,25 +76,13 @@ function splitData(data) {
 
         let newOutputLength = outputContent.length() + line.length + footer.length
         if (newOutputLength > outputMaxSize) {
-            if (appendFooter) {
-                outputContent.appendLine(footer)
-            }
-
-            convertedParts.push(outputContent.toString())
-
-            outputContent.clear()
-
-            if (appendHeader) {
-                outputContent.appendLine(header)
-            }
+            addCurrentPart()
         }
 
-        outputContent.appendLine(line)
+        appendData(line)
     }
 
-    if (outputContent.length() > 0) {
-        convertedParts.push(outputContent.toString())
-    }
+    addCurrentPart()
 
     logInfoGlobal(`Successfully split ${inputExtension} to ${convertedParts.length} ${outputExtension} parts`)
     return convertedParts
