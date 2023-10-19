@@ -1,15 +1,22 @@
+import {logInfoGlobal} from "./LogUtils.js";
+
 export function requireConsoleArg(key) {
     const arg = getConsoleArg(key)
     if (arg == null) {
-        console.log(`process args: ${process.argv}`)
+        logInfoGlobal(`process args: ${process.argv}`)
         throw new Error(`Argument ${key} is required but doesn't have a value`)
     }
 
     return arg
 }
 
-export const hasConsoleArg = (key) => {
-    return process.argv.includes(`--${key}`)
+export const hasConsoleFlagArg = (key) => {
+    const arg = getConsoleArg(key)
+    if (!arg) {
+        return null
+    }
+
+    return arg === "true"
 }
 
 export const getConsoleArg = (key) => {
