@@ -2,6 +2,7 @@ import fileSystem from 'fs'
 import {getConsoleArg, requireConsoleArg} from "./ConsoleArguments.js";
 import {logInfoGlobal} from "./LogUtils.js";
 import {formatString} from "./StringFormat.js";
+import path from 'path'
 
 const filePartTemplate = "%s_%s.%s"
 
@@ -51,6 +52,10 @@ export function readFile(inputExtension) {
         throw new Error(`Input file extension must be ${inputExtension}`)
     }
 
+    return readFileString(inputFile)
+}
+
+export function readFileString(path) {
     const inputOptionsEncoding = getConsoleArg("input-options-encoding") || "utf8"
     const inputOptionsFlag = getConsoleArg("input-options-flag") || null
 
@@ -59,10 +64,7 @@ export function readFile(inputExtension) {
         flag: inputOptionsFlag,
     }
 
-    logInfoGlobal(`Reading file ${inputFile} with options ${JSON.stringify(options)}`)
-    const data = fileSystem.readFileSync(inputFile, options);
-
-    logInfoGlobal(`Got data of length ${data.length}`)
+    const data = fileSystem.readFileSync(path, options);
     return data.toString(inputOptionsEncoding, 0, data.length);
 }
 
@@ -78,3 +80,46 @@ export function manipulateFileAsParts(inputExtension, outputExtension, manipulat
     writeFiles(manipulatedDataParts, inputExtension, outputExtension)
 }
 
+export function fileExists(path) {
+    return fileSystem.existsSync(path)
+}
+
+export function isDirectory(path) {
+    return fileSystem.lstatSync(path).isDirectory()
+}
+
+export function isFile(path) {
+    return fileSystem.lstatSync(path).isFile()
+}
+
+export function fileStats(path) {
+    return fileSystem.lstatSync(path) 
+}
+
+export function fileExt(filePath) {
+    return path.extname(filePath)
+}
+
+export function fileName(filePath) {
+    return path.basename(filePath)
+}
+
+export function removeFile(filePath, callback) {
+    return fileSystem.unlink(filePath, callback)
+}
+
+export function walkDirectory(dir, callback) {
+	fileSystem.readdir(dir, function(err, files) {
+		if (err) throw err;
+		files.forEach(function(file) {
+			var filepath = path.join(dir, file);
+			fileSystem.stat(filepath, function(err,stats) {
+				if (stats.isDirectory()) {
+					walk(filepath, callback);
+				} else if (stats.isFile()) {
+					callback(filepath, stats);
+				}
+			});
+		});
+	});
+}
