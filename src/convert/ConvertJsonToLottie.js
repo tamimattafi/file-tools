@@ -1,14 +1,14 @@
 import {getConsoleArg} from "../common/ConsoleArguments.js"
 import {logErrorGlobal, logInfoGlobal} from "../common/LogUtils.js";
 import { DotLottie } from '@dotlottie/dotlottie-js/node'
-import {fileExists, isDirectory, walkDirectory, fileStats, fileExt, fileName, readFileString} from "../common/FileUtils.js";
+import {fileExists, isDirectory, walkDirectory, fileStats, fileExt, fileBaseName, readFileString, writeFileSync, removeFile, changePathExt} from "../common/FileUtils.js";
+
 
 const inputExtension = 'json'
 const outputExtension = 'lottie'
 
 const defaultAuthor = "Lottie"
 const defaultVersion = "1.0"
-
 
 try {
   convert()
@@ -31,37 +31,36 @@ async function convert() {
 
 async function convertFile(path, stats) {
   if (fileExt(path) !== `.${inputExtension}`) {
-    logInfoGlobal(`Skipping ${inputExtension} ${path}...`)
+    logInfoGlobal(`Skipping non-${inputExtension} at ${path}...`)
     return
   }
 
-
-  const name = fileName(path)
-  const downloadName = `${path}.lottie`
-
+  const name = fileBaseName(path)
+  const downloadPath = changePathExt(path, outputExtension)
   const author = getConsoleArg("author") || defaultAuthor
   const version = getConsoleArg("version") || defaultVersion
-  const data = readFileString(path)
-  logInfoGlobal(`data ${data}`)
-
-  logInfoGlobal(`Converting ${name} to ${outputExtension}...`)
-
+  const data = JSON.parse(readFileString(path))
   const dotLottie = new DotLottie();
-  await dotLottie
-  .setAuthor(author)
+  
+  await dotLottie.setAuthor(author)
   .setVersion(version)
   .addAnimation({
     id: name,
-    data: data,
-    loop: true,
-    autoplay: true
+    data: data
   })
   .build()
-  .then((value) => {
-    value.download(downloadName);
+  .then((lottieFile) => {
+    logInfoGlobal(`Converted ${name} to ${outputExtension}...`)
+    return lottieFile.toArrayBuffer();
   })
-  .then((response) => {
-    logInfoGlobal(`Downloaded ${downloadName}...`)
+  .then((arrayBuffer) => {
+    let buffer = Buffer.from(arrayBuffer)
+    writeFileSync(downloadPath, buffer)
+    logInfoGlobal(`Downloaded ${downloadPath}`)
+  })
+  .then(() => {
+    removeFile(path)
+    logInfoGlobal(`Removed Original ${path}`)
   })
 }
 

@@ -26,7 +26,7 @@ export function getOutputFilePart(outputFile, index, outputExtension) {
 export function writeFile(content, inputExtension, outputExtension) {
     const outputFile = getOutputFile(inputExtension, outputExtension)
     logInfoGlobal(`Writing data of length ${content.length} to ${outputFile}`)
-    fileSystem.writeFileSync(outputFile, content);
+    writeFileSync(outputFile, content);
     logInfoGlobal(`Success!`)
 }
 
@@ -40,7 +40,7 @@ export function writeFiles(contents, inputExtension, outputExtension) {
     contents.forEach((content, index) => {
         const outputFilePart = getOutputFilePart(outputFile, index, outputExtension)
         logInfoGlobal(`Writing data of length ${content.length} to ${outputFilePart}`)
-        fileSystem.writeFileSync(outputFilePart, content);
+        writeFileSync(outputFilePart, content);
     })
 
     logInfoGlobal(`Success!`)
@@ -97,15 +97,27 @@ export function fileStats(path) {
 }
 
 export function fileExt(filePath) {
-    return path.extname(filePath)
+    return path.parse(filePath).ext
+}
+
+export function fileBaseName(filePath) {
+    return path.parse(filePath).base
 }
 
 export function fileName(filePath) {
-    return path.basename(filePath)
+    return path.parse(filePath).name
 }
 
-export function removeFile(filePath, callback) {
-    return fileSystem.unlink(filePath, callback)
+export function removeFile(filePath) {
+    return fileSystem.unlinkSync(filePath)
+}
+
+export function writeFileSync(filePath, buffer) {
+    fileSystem.writeFileSync(filePath, buffer);
+}
+
+export function changePathExt(filePath, ext) {
+    return filePath.substr(0, filePath.lastIndexOf(".")) + `.${ext}`
 }
 
 export function walkDirectory(dir, callback) {
