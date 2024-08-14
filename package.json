@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@dotlottie/dotlottie-js": "^0.8.0",
     "node-stringbuilder": "^2.2.7",
     "process": "^0.11.10"
   }
